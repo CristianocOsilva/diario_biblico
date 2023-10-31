@@ -14,6 +14,28 @@ def setup_database():
     """)
     conn.commit()
     return conn
+import streamlit as st
+
+# Função para ler e atualizar o contador a partir de um arquivo
+def update_counter():
+    try:
+        with open("access_counter.txt", "r") as file:
+            count = int(file.read())
+        count += 1
+        with open("access_counter.txt", "w") as file:
+            file.write(str(count))
+    except FileNotFoundError:
+        with open("access_counter.txt", "w") as file:
+            file.write("1")
+        count = 1
+    return count
+
+# Obtém o contador atual
+access_count = update_counter()
+
+# Página Streamlit
+st.title("Contador de Acessos")
+st.write(f"Esta página foi acessada {access_count} vezes.")
 
 def main():
     st.title("Bíblia: Conexões e reflexões")
