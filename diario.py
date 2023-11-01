@@ -61,7 +61,7 @@ def main():
     data = st.sidebar.date_input("Data:", help="Selecione a data da entrada.", format="DD/MM/YYYY")
     texto = st.sidebar.text_area("Texto:", help="Digite sua entrada de diário")
     
-    if st.sidebar.button("Digitar Texto"):
+    if st.sidebar.button("Entrada de Texto"):
         if data and texto:
             cursor = conn.cursor()
             cursor.execute("INSERT INTO entradas_diario (data, texto) VALUES (?, ?)", (data, texto))
