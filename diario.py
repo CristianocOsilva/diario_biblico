@@ -1,6 +1,7 @@
 import streamlit as st
 import sqlite3
 from PIL import Image
+from streamlit_elements import elements
 
 # Configurando a conexão com o banco de dados SQLite
 def setup_database():
@@ -58,9 +59,10 @@ def main():
 
     # Lado esquerdo da tela para inserção de texto
     st.sidebar.title("Inserir Texto")
+
     data = st.sidebar.date_input("Data:", help="Selecione a data da entrada.", format="DD/MM/YYYY")
     texto = st.sidebar.text_area("Texto:", help="Digite sua entrada de diário")
-    
+
     if st.sidebar.button("Entrada de Texto"):
         if data and texto:
             cursor = conn.cursor()
@@ -82,15 +84,12 @@ def main():
     col1, col2 = st.columns(2)
 
     for i, entry in enumerate(entries):
-        # Use uma formatação personalizada para criar uma chave única
         if i % 2 == 0:
-            with col1:
-                st.write(f"**Data:** {entry[0]}", key=f"data_{entry[0]}")
-                st.write(f"**Texto:** {entry[1]}", key=f"texto_{entry[0]}")
+            with elements.expander(f"**Data:** {entry[0]}", f"**Texto:** {entry[1]}"):
+                pass
         else:
-            with col2:
-                st.write(f"**Data:** {entry[0]}", key=f"data_{entry[0]}")
-                st.write(f"**Texto:** {entry[1]}", key=f"texto_{entry[0]}")
+            with elements.expander(f"**Data:** {entry[0]}", f"**Texto:** {entry[1]}"):
+                pass
 
 if __name__ == "__main__":
     main()
