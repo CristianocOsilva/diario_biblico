@@ -1,23 +1,42 @@
 import streamlit as st
 import sqlite3
+import pandas as pd
 from PIL import Image
-from streamlit_elements import elements
+from datetime import datetime
 
-# Configurando a conexão com o banco de dados SQLite
-def setup_database():
-    conn = sqlite3.connect("diario.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS entradas_diario (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            data DATE,
-            texto TEXT
-        )
-    """)
-    conn.commit()
-    return conn
+class DiarioApp:
+    def __init__(self):
+        self.conn = self.setup_database()
 
-# Função para ler e atualizar o contador a partir do banco de dados
+    def setup_database(self):
+        conn = sqlite3.connect("diario.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS entradas_diario (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data DATE,
+                texto TEXT
+            )
+        """)
+        conn.commit()
+        return conn
+
+    def insert_entry(self, data, texto):
+        cursor = self.conn.cursor()
+        cursor.execute("INSERT INTO entradas_diario (data, texto) VALUES (?, ?)", (data, texto))
+        self.conn.commit()
+
+    def clear_entries(self):
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM entradas_diario")
+        self.conn.commit()
+
+    def get_entries(self, num_entries=5):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT data, texto FROM entradas_diario ORDER BY data DESC LIMIT ?", (num_entries,))
+        entries = cursor.fetchall()
+        return entries
+
 def update_counter():
     conn = sqlite3.connect("counter.db")
     cursor = conn.cursor()
@@ -41,55 +60,50 @@ def update_counter():
     conn.close()
     return count
 
-# Obtém o contador atual
-access_count = update_counter()
-
-# Página Streamlit
-st.title("Contador de Acessos")
-st.write(f"Esta página foi acessada {access_count} vezes.")
-
 def main():
     st.title("Bíblia: Conexões e reflexões")
+
+    # Adicionando mensagem no topo
+    st.header("Bem-vindo ao Diário da Bíblia")
+    st.write("Registre suas reflexões diárias e conexões com a Bíblia.")
+
+    # Adicionando calendário e relógio no topo
+    col1, col2, col3 = st.columns(3)
+    col1.subheader("Calendário")
+    col1.date_input("Data Atual", value=datetime.now())
+
+    col2.subheader("Relógio")
+    col2.write(datetime.now().strftime("%H:%M:%S"))
+
+    col3.subheader("Contador de Acessos")
+    access_count = update_counter()
+    col3.write(f"Esta página foi acessada {access_count} vezes.")
+
+    diario_app = DiarioApp()
 
     # Definir a imagem de fundo
     background_image = Image.open("biblia.jpg")
     st.image(background_image, use_column_width=True, caption="")
 
-    conn = setup_database()
-
     # Lado esquerdo da tela para inserção de texto
     st.sidebar.title("Inserir Texto")
 
-    data = st.sidebar.date_input("Data:", help="Selecione a data da entrada.", format="DD/MM/YYYY")
+    data = st.sidebar.date_input("Data:", help="Selecione a data da entrada.", value=datetime.now(), format="DD/MM/YYYY")
     texto = st.sidebar.text_area("Texto:", help="Digite sua entrada de diário")
 
     if st.sidebar.button("Entrada de Texto"):
         if data and texto:
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO entradas_diario (data, texto) VALUES (?, ?)", (data, texto))
-            conn.commit()
+            diario_app.insert_entry(data, texto)
             st.sidebar.success("Entrada de texto adicionada com sucesso!")
 
     if st.sidebar.button("Limpar Tela"):
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM entradas_diario")
-        conn.commit()
+        diario_app.clear_entries()
         st.sidebar.success("Banco de dados limpo com sucesso!")
 
-    cursor = conn.cursor()
-    cursor.execute("SELECT data, texto FROM entradas_diario ORDER BY data DESC")  # Ordenar por data decrescente
-    entries = cursor.fetchall()
-
-    # Dividir a tela em duas colunas
-    col1, col2 = st.columns(2)
-
-    for i, entry in enumerate(entries):
-        if i % 2 == 0:
-            with elements.expander(f"**Data:** {entry[0]}", f"**Texto:** {entry[1]}"):
-                pass
-        else:
-            with elements.expander(f"**Data:** {entry[0]}", f"**Texto:** {entry[1]}"):
-                pass
+    # Recuperar entradas e exibir no Streamlit
+    entries = diario_app.get_entries(num_entries=5)
+    df_entries = pd.DataFrame(entries, columns=["Data", "Texto"])
+    st.table(df_entries)
 
 if __name__ == "__main__":
     main()
