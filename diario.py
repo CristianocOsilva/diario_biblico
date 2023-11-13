@@ -61,17 +61,15 @@ def update_counter():
     return count
 
 def main():
-    st.title("Bíblia: Conexões e reflexões")
+    st.set_page_config(page_title="Bíblia: Conexões e Reflexões", page_icon=":book:")
 
-    # Adicionando mensagem no topo
-    st.header("Bem-vindo ao Diário da Bíblia")
-    st.write("Registre suas reflexões diárias e conexões com a Bíblia.")
+    st.title("Bíblia: Conexões e reflexões")
 
     # Adicionando calendário e relógio no topo
     col1, col2, col3 = st.columns(3)
     col1.subheader("Calendário")
-    col1.date_input("Data Atual", value=datetime.now())
-
+    selected_date = col1.date_input("Data Atual", value=datetime.now(), format="DD/MM/YYYY")
+    
     col2.subheader("Relógio")
     col2.write(datetime.now().strftime("%H:%M:%S"))
 
